@@ -7,8 +7,8 @@
 Then in your `init.el`
 
 ``` elisp
-(load-file "~/Code/node-resolver-mode/node-resolver-mode.el")
-(add-hook 'js3-mode-hook 'node-resolver-mode)
+(load-file "~/Code/node-resolver-mode/node-resolver.el")
+(add-hook 'js3-mode-hook 'node-resolver-start)
 ```
 
 ## Notes
