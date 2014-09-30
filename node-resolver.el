@@ -1,4 +1,4 @@
-;;; node-resolver-mode.el --- hook to install node modules in background
+;;; node-resolver.el --- hook to install node modules in background
 
 ;; Copyright © 2014 Dave Justice
 
@@ -78,9 +78,10 @@
         (setq *node-resolver-project-root* nil))))
   *node-resolver-project-root*)
 
-(defun node-resolver-mode ()
+(defun node-resolver-start ()
   (if (not (member (npm-install-project-root) npm-install-active-projects))
       (and (start-process "node-resolver bg process" nil "node-resolver" (node-resolver-project-root))
            (push (npm-install-project-root) npm-install-active-projects))))
 
-(provide 'node-resolver-mode)
+(provide 'node-resolver)
+;;; node-resolver.el ends here
