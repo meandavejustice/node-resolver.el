@@ -7,6 +7,7 @@
 ;; Version: 0.1.0
 ;; Created: 2014-09-29
 ;; Keywords: convenience, nodejs, javascript, npm
+;; Package-Requires: ((cl-lib "0.5"))
 
 ;; This file is NOT part of GNU Emacs.
 
@@ -35,48 +36,35 @@
 
 ;;; Code:
 
+(require 'vc)
+(require 'cl-lib)
 
 (defvar *node-resolver-project-root* nil
   "Used internally to cache the project root.")
+(make-variable-buffer-local '*node-resolver-project-root*)
 
 (defvar node-resolver-active-projects ()
-  "List of active projects")
+  "List of active projects.")
 
 (defvar node-resolver-project-roots
-  '(".git" ".hg" "Rakefile" "Makefile" "README" "build.xml" ".emacs-project"
+  '("Rakefile" "Makefile" "README" "README.md" "build.xml" ".emacs-project"
     ".emacs-project" "node_modules" "package.json" "LICENSE" "bower.json")
   "The presence of any file/directory in this list indicates a project root.")
 
-(defun root-match(root names)
-  (member (car names) (directory-files root)))
-
-(defun root-matches(root names)
-  (if (root-match root names)
-      (root-match root names)
-    (if (eq (length (cdr names)) 0)
-        'nil
-      (root-matches root (cdr names))
-      )))
-
-(defun node-resolver-find-project-root (&optional root)
+(defun node-resolver-find-project-root ()
   "Determines the current project root by recursively searching for an indicator."
-  (when (null root) (setq root default-directory))
-  (cond
-   ((root-matches root *node-resolver-project-roots*)
-    (expand-file-name root))
-   ((equal (expand-file-name root) "/") nil)
-   (t (node-resolver-find-project-root (concat (file-name-as-directory root) "..")))))
+  (when default-directory
+    (or (vc-root-dir)
+        (locate-dominating-file default-directory
+                                (lambda (dir)
+                                  (cl-intersection (directory-files dir)
+                                                   node-resolver-project-roots
+                                                   :test 'string=))))))
 
 (defun node-resolver-project-root ()
   "Returns the current project root."
-  (when (or
-         (null *node-resolver-project-root*)
-         (not (string-match *node-resolver-project-root* default-directory)))
-    (let ((root (node-resolver-find-project-root)))
-      (if root
-          (setq *node-resolver-project-root* (expand-file-name (concat root "/")))
-        (setq *node-resolver-project-root* nil))))
-  *node-resolver-project-root*)
+  (or *node-resolver-project-root*
+      (setq *node-resolver-project-root* (node-resolver-find-project-root))))
 
 (defun node-resolver-start ()
   (if (not (member (npm-install-project-root) npm-install-active-projects))
