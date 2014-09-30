@@ -3,7 +3,7 @@
 ;; Copyright © 2014 Dave Justice
 
 ;; Author: Dave Justice
-;; URL: https://github.com/meandavejustice/node-resolver-mode.el
+;; URL: https://github.com/meandavejustice/node-resolver.el
 ;; Version: 0.1.0
 ;; Created: 2014-09-29
 ;; Keywords: convenience, nodejs, javascript, npm
@@ -54,22 +54,24 @@
 (defun node-resolver-find-project-root ()
   "Determines the current project root by recursively searching for an indicator."
   (when default-directory
-    (or (vc-root-dir)
-        (locate-dominating-file default-directory
+    (locate-dominating-file default-directory
                                 (lambda (dir)
                                   (cl-intersection (directory-files dir)
                                                    node-resolver-project-roots
-                                                   :test 'string=))))))
+                                                   :test 'string=)))))
 
-(defun node-resolver-project-root ()
+(defun node-resolver-get-project-root ()
   "Returns the current project root."
   (or *node-resolver-project-root*
       (setq *node-resolver-project-root* (node-resolver-find-project-root))))
 
+(defun node-resolver-start-process (dir)
+  (start-process-shell-command "node-resolver-process" nil (format "cd %s && node-resolver ." dir)))
+
 (defun node-resolver-start ()
-  (if (not (member (npm-install-project-root) npm-install-active-projects))
-      (and (start-process "node-resolver bg process" nil "node-resolver" (node-resolver-project-root))
-           (push (npm-install-project-root) npm-install-active-projects))))
+  (if (not (member (node-resolver-get-project-root) node-resolver-active-projects))
+      (and (node-resolver-start-process (node-resolver-get-project-root))
+           (push (node-resolver-get-project-root) node-resolver-active-projects))))
 
 (provide 'node-resolver)
 ;;; node-resolver.el ends here
